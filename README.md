@@ -8,6 +8,6 @@ Before running the project, make sure you have the following installed:
 - Raspbian OS Lite
 - Python3
   
-#Packages
+# Packages
 - import RPi.GPIO
 - import time
