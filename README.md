@@ -7,7 +7,7 @@ Scripts used in congruence with the RC Plane Wildfire Prediction System Modeling
 - Raspberry Pi (any model with GPIO support)
 - Raspbian OS Lite
 - Python3
-- 
+  
 #Packages
 - import RPi.GPIO
 - import time
