@@ -11,3 +11,6 @@ Before running the project, make sure you have the following installed:
 # Packages
 - import RPi.GPIO
 - import time
+- import datetime
+- import os
+- import subprocess
