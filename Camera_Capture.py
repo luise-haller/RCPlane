@@ -6,7 +6,7 @@ import subprocess
 output_dir = os.path.expanduser("~/Videos")
 os.makedirs(output_dir, exist_ok="True")
 
-duration_of_vid = 5 # 5mins
+duration_of_vid = 300 # 5mins
 
 # Records 5min videos continously and saves them in the Videos dir
 def record_vid():
@@ -18,12 +18,13 @@ def record_vid():
         vid_record_command = [
             "libcamera-vid",
             "-t", str(duration_of_vid * 1000),
-            "--codec", "libav", " " # encodes it properly so it can played on vlc
+            "--codec", "libav", # encodes it properly so it can played on vlc
             "-o", fpath
         ]
 
+        print("Filepath saved to is: " + fpath)
         subprocess.run(vid_record_command, check=True)
-
+        
 if __name__ == "__main__":
     try:
         record_vid()
