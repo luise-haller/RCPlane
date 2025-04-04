@@ -8,6 +8,7 @@ os.makedirs(output_dir, exist_ok="True")
 
 duration_of_vid = 5 # 5mins
 
+# Records 5min videos continously and saves them in the Videos dir
 def record_vid():
     while True:
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
