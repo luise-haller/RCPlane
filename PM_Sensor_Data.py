@@ -1,7 +1,7 @@
 """
 PMS5003 Data Log Script
 
-This script reads data from the PMS5003 sensor connected to a Raspberry Pic 4B,
+This script reads data from the PMS5003 sensor connected to a Raspberry Pi 4B,
 and logs the data to a CSV file.
 
 Hardware Setup:
@@ -34,7 +34,7 @@ Libraries:
 1. Make sure sensor is installed as described above.
 2. Make sure script is placed in the correct dir ('~/Automation_Scripts')
 3. Run script using 'python3 PM_Sensor_Data.py'
-4. After successful run, data is logged to a CSV file in ~/Data
+4. After successful run, data is logged to a CSV file in ~/Data/PM
 """
 
 import time
@@ -43,7 +43,7 @@ import csv
 import os
 from pms5003 import PMS5003
 
-DAT_DIR = "~/Data/"
+DAT_DIR = "~/Data/PM"
 CSV_FNAME = "pms5003_data.csv"
 LOGGING_INTV = 1
 MAV_FILE_SIZE = 1 * 1024 * 1024 # 1MB before rotating files; enough for 30min flight while efficient
