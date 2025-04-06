@@ -19,9 +19,10 @@ Hardware Setup:
     - SCL -> GPIO 3 (SCL)
 """
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 import smbus2
 import os
+from gps_utils import find_closest_gps
 
 class AHT10:
     def __init__(self, bus=1, address=0x38):
@@ -71,21 +72,25 @@ def log_to_csv(dir="~/Data/AHT10", max_file_size=5 * 1024 * 1024, interval=10):
     os.makedirs(dir, exist_ok=True)
 
     def get_new_fname():
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
         return os.path.join(dir, f"sensor_data_{timestamp}.csv")
     
     fname = get_new_fname()
 
     with open(fname, 'w') as f:
-        f.write("Timestamp,Temperature (C),Humidity (%)\n") # header
+        f.write("Timestamp,Temperature (C),Humidity (%),Latitude,Longitude\n") # header
     
     while True:
         try:
-            temp, hum = sensor.read_data()
-            timestamp = datetime.now().isoformat()
+            temp, hum = sensor.read_dat()
+            timestamp = datetime.now(timezone.utc)
+            gps = find_closest_gps(timestamp)
+            # assigning default just in case
+            lat = gps['lat'] if gps['lat'] else 0.0 
+            lon = gps['lon'] if gps['lon'] else 0.0
             
             with open(fname, 'a') as f:
-                f.write(f"{timestamp},{temp},{hum}\n")
+                f.write(f"{timestamp.isoformat()},{temp},{hum},{gps['lat']},{gps['lon']}\n")
                 f.flush()
             
             # roate file if file size too big
@@ -93,7 +98,7 @@ def log_to_csv(dir="~/Data/AHT10", max_file_size=5 * 1024 * 1024, interval=10):
                 fname = get_new_fname()
                 
                 with open(fname, 'w') as f:
-                    f.write("Timestamp,Temperature (C),Humidity (%)\n")  # rewriting header when rotating
+                    f.write("Timestamp,Temperature (C),Humidity (%),Latitude,Longitude\n")  # rewriting the header when rotating
                 
             time.sleep(interval)
     
@@ -109,3 +114,4 @@ def log_to_csv(dir="~/Data/AHT10", max_file_size=5 * 1024 * 1024, interval=10):
         
 if __name__ == "__main__":
    log_to_csv()
+
