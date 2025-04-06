@@ -28,8 +28,9 @@ Transport Protocol:
     - Check code: Sum of all previous bytes, retaining only the lower 8 bits
 
 Libraries:
-- pms5003 ('pip install pms5003')
+- pms5003
 - csv
+- etc
 
 1. Make sure sensor is installed as described above.
 2. Make sure script is placed in the correct dir ('~/Automation_Scripts')
@@ -38,10 +39,11 @@ Libraries:
 """
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 import csv
 import os
-from pms5003 import PMS5003
+from pms5003 import PMS5003 #pip install pms5003
+from gps_utils import find_closest_gps
 
 DAT_DIR = "~/Data/PM"
 CSV_FNAME = "pms5003_data.csv"
@@ -55,50 +57,59 @@ os.makedirs(DAT_DIR, exist_ok=True)
 
 # configuring the sensor
 pms5003 = PMS5003 (
-    device='/dev/', #figure out serial port...either ttyAMA0 or serial0
+    device='/dev/serial0', #figure out serial port...either ttyAMA0 or serial0
     baudrate=9600,
-    pin_enable="GPIO22", #if we stick with rpi4
-    pin_reset="GPIO27"
+    # pin_enable="GPIO22", #if we stick with rpi4
+    # pin_reset="GPIO27"
 )
 
 def get_csv_path():
     base_path = os.path.join(DAT_DIR, CSV_FNAME)
 
     if os.path.exists(base_path) and os.path.getsize(base_path) > MAV_FILE_SIZE:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         return os.path.join(DAT_DIR, f"pms5003_data_{timestamp}.csv")
     return base_path
 
 def init_csv_file(file_path):
     if not os.path.exists(file_path):
         with open(file_path, 'w', newline="") as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow([
+            wr = csv.writer(csvfile)
+            wr.writerow([
                 'timestamp',
-                'pm1_0_std', 'pm2_5std', 'pm10_std',
+                'pm1_0_std', 'pm2_5_std', 'pm10_std',
                 'pm1_0_atm', 'pm2_5_atm', 'pm10_atm',
                 'particles_0_3um', 'particles_0_5um', 'particles_1_0um',
-                'particles_2_5um', 'particles_5_0um', 'particles_10_0um'
+                'particles_2_5um', 'particles_5_0um', 'particles_10_0um',
+                'latitude', 'longitude'
             ])
     return file_path
 
 def append_to_csv(file_path, dat):
     with open(file_path, 'a', newline="") as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow([
-            datetime.now().isoformat(),
+        wr = csv.writer(csvfile)
+
+        timestamp = datetime.now(timezone.utc)
+        gps = find_closest_gps(timestamp)
+        # assigning default just in case
+        lat = gps['lat'] if gps['lat'] else 0.0 
+        lon = gps['lon'] if gps['lon'] else 0.0
+
+        wr.writerow([
+            timestamp.isoformat(),
             dat.pm_ug_per_m3(1.0, True),
             dat.pm_ug_per_m3(2.5, True),
-            dat.pm_ug_per_m3(10, True),
+            dat.pm_ug_per_m3(10.0, True),
             dat.pm_ug_per_m3(1.0, False), 
             dat.pm_ug_per_m3(2.5, False), 
-            dat.pm_ug_per_m3(10, False),
+            dat.pm_ug_per_m3(10.0, False),
             dat.pm_per_1l_air(0.3), 
             dat.pm_per_1l_air(0.5), 
             dat.pm_per_1l_air(1.0),
             dat.pm_per_1l_air(2.5), 
             dat.pm_per_1l_air(5), 
-            dat.pm_per_1l_air(10)
+            dat.pm_per_1l_air(10.0),
+            gps['lat'], gps['lon']
         ])
 
 def main():
@@ -113,14 +124,15 @@ def main():
                 csvf = init_csv_file(get_csv_path()) # rotating file if required
                 append_to_csv(csvf, dat)
 
-                print(f"[{datetime.now().isoformat()}] PM2.5: {dat.pm_ug_per_m3(2.5, False)} µg/m³")
+                print(f"[{datetime.now(timezone.utc).isoformat()}] PM2.5: {dat.pm_ug_per_m3(2.5, False)} µg/m³")
                 time.sleep(LOGGING_INTV)
+
             except Exception as e:
                 print(f"Error reading sensor: {e}")
                 time.sleep(1)
+
     except KeyboardInterrupt:
-        print("Sensor reading interrupted.")
-        print("Closing the program")
+        print("Sensor reading interrupted and closing the program")
 
 if __name__ == "__main__":
     main()
