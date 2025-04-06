@@ -65,7 +65,7 @@ class AHT10:
         return round(temp, 1), round(humidity, 1)
     
 
-def log_to_csv(dir="~/Data", max_file_size=5 * 1024 * 1024, interval=10):
+def log_to_csv(dir="~/Data/AHT10", max_file_size=5 * 1024 * 1024, interval=10):
     sensor = AHT10(bus=1)
     dir = os.path.expanduser(dir)
     os.makedirs(dir, exist_ok=True)
